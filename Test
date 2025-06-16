@@ -1,0 +1,557 @@
+--[[
+    Script Features:
+    - Draggable Key UI with a modern, futuristic design.
+    - Key System ("PGUISBADGOALKEEPER") to unlock main features.
+    - Optional "Aiku" style setting for goalkeepers via a confirmation popup.
+    - Draggable and persistent toggle button for a visual hitbox circle.
+    - The circle automatically fires the dive event when active.
+    - Constant enlargement of the football's hitbox for easier saves.
+    - Visual trail showing the ball's trajectory.
+    - Infinite stamina lock.
+    - Smooth UI notifications and popups using TweenService.
+    - Buttons to copy a key link and a Discord invite link.
+    - NEW: Main Hub with hide/unhide functionality and additional features.
+]]
+
+-- Services
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+
+-- Player variable
+local player = Players.LocalPlayer
+
+--- UI Setup ---
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "DraggableUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 300, 0, 220)
+frame.Position = UDim2.new(0.5, -150, 0.5, -110)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
+frame.BorderSizePixel = 0
+frame.Parent = screenGui
+
+local frameCorner = Instance.new("UICorner")
+frameCorner.CornerRadius = UDim.new(0, 10)
+frameCorner.Parent = frame
+
+local frameStroke = Instance.new("UIStroke")
+frameStroke.Color = Color3.fromRGB(80, 80, 150)
+frameStroke.Thickness = 2
+frameStroke.Transparency = 0.5
+frameStroke.Parent = frame
+
+--- Dragging functionality for frame ---
+local dragging, dragInput, dragStart, startPos
+local function update(input)
+	local delta = input.Position - dragStart
+	frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+frame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = frame.Position
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+frame.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
+end)
+UserInputService.InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		update(input)
+	end
+end)
+
+--- Close Button (for initial key frame) ---
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 25, 0, 25)
+closeButton.Position = UDim2.new(1, -30, 0, 5)
+closeButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+closeButton.Text = "X"
+closeButton.TextColor3 = Color3.new(1,1,1)
+closeButton.Font = Enum.Font.GothamBold
+closeButton.TextScaled = true
+closeButton.Parent = frame
+
+local closeButtonCorner = Instance.new("UICorner")
+closeButtonCorner.CornerRadius = UDim.new(0, 5)
+closeButtonCorner.Parent = closeButton
+
+closeButton.MouseButton1Click:Connect(function()
+	screenGui:Destroy()
+end)
+
+--- Key Box ---
+local keyBox = Instance.new("TextBox")
+keyBox.Size = UDim2.new(0, 250, 0, 35)
+keyBox.Position = UDim2.new(0.5, -125, 0, 30)
+keyBox.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+keyBox.TextColor3 = Color3.new(1,1,1)
+keyBox.PlaceholderText = "Enter your key here..."
+keyBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 200)
+keyBox.ClearTextOnFocus = false
+keyBox.Font = Enum.Font.SourceSansSemibold
+keyBox.TextSize = 16
+keyBox.Parent = frame
+
+local keyBoxCorner = Instance.new("UICorner")
+keyBoxCorner.CornerRadius = UDim.new(0, 8)
+keyBoxCorner.Parent = keyBox
+
+--- Copy Key Link Button ---
+local copyLinkButton = Instance.new("TextButton")
+copyLinkButton.Size = UDim2.new(0, 130, 0, 40)
+copyLinkButton.Position = UDim2.new(0.5, -135, 0, 85)
+copyLinkButton.BackgroundColor3 = Color3.fromRGB(0, 120, 220)
+copyLinkButton.Text = "Copy Key Link"
+copyLinkButton.TextColor3 = Color3.new(1,1,1)
+copyLinkButton.Font = Enum.Font.GothamBold
+copyLinkButton.TextSize = 18
+copyLinkButton.Parent = frame
+
+local copyLinkButtonCorner = Instance.new("UICorner")
+copyLinkButtonCorner.CornerRadius = UDim.new(0, 8)
+copyLinkButtonCorner.Parent = copyLinkButton
+
+copyLinkButton.MouseButton1Click:Connect(function()
+	local success, err = pcall(function()
+		setclipboard("https://pastebin.com/Q3FXYNj3")
+	end)
+	copyLinkButton.Text = success and "Copied!" or "Failed!"
+	task.wait(2)
+	copyLinkButton.Text = "Copy Key Link"
+end)
+
+--- Check Button ---
+local checkButton = Instance.new("TextButton")
+checkButton.Size = UDim2.new(0, 130, 0, 40)
+checkButton.Position = UDim2.new(0.5, 5, 0, 85)
+checkButton.BackgroundColor3 = Color3.fromRGB(80, 170, 80)
+checkButton.Text = "Check Key"
+checkButton.TextColor3 = Color3.new(1,1,1)
+checkButton.Font = Enum.Font.GothamBold
+checkButton.TextSize = 18
+checkButton.Parent = frame
+
+local checkButtonCorner = Instance.new("UICorner")
+checkButtonCorner.CornerRadius = UDim.new(0, 8)
+checkButtonCorner.Parent = checkButton
+
+--- Discord Button ---
+local discordButton = Instance.new("TextButton")
+discordButton.Size = UDim2.new(0, 270, 0, 40)
+discordButton.Position = UDim2.new(0.5, -135, 0, 145)
+discordButton.BackgroundColor3 = Color3.fromRGB(70, 100, 250)
+discordButton.Text = "Join Discord"
+discordButton.TextColor3 = Color3.new(1,1,1)
+discordButton.Font = Enum.Font.GothamBold
+discordButton.TextSize = 18
+discordButton.Parent = frame
+
+local discordButtonCorner = Instance.new("UICorner")
+discordButtonCorner.CornerRadius = UDim.new(0, 8)
+discordButtonCorner.Parent = discordButton
+
+-- ***** MODIFICATION: Set to the Discord link you requested *****
+discordButton.MouseButton1Click:Connect(function()
+	local success, err = pcall(function()
+		setclipboard("https://discord.gg/Wy7Mhhgn3h")
+	end)
+	discordButton.Text = success and "Copied!" or "Failed to copy"
+	task.wait(2)
+	discordButton.Text = "Join Discord"
+end)
+
+--- Variables for circle & hitbox ---
+local hrp = nil
+local radius = 35
+local segments = 40
+local parts = {}
+local circleVisible = false
+local firstSpawn = true
+
+--- Persistent toggle button GUI (will be removed and integrated into hub) ---
+local toggleGui = nil
+local circleToggleButton = nil
+
+--- Main Hub UI Variables ---
+local mainHubGui = nil
+local mainHubFrame = nil
+local hideToggleButton = nil
+
+--- Popup Message Function ---
+local function showPopupMessage(text, duration, fadeTime)
+	local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+	gui.Name = "Popup"
+	local label = Instance.new("TextLabel", gui)
+	label.Size = UDim2.new(0, 300, 0, 60)
+	label.Position = UDim2.new(0.5, -150, 0.05, 0)
+	label.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+	label.BackgroundTransparency = 0.8
+	label.TextColor3 = Color3.new(1, 1, 1)
+	label.Font = Enum.Font.GothamBold
+	label.TextSize = 28
+	label.Text = text
+	label.ZIndex = 10
+
+	local popupCorner = Instance.new("UICorner")
+	popupCorner.CornerRadius = UDim.new(0, 10)
+	popupCorner.Parent = label
+
+	label.TextTransparency = 0
+	label.BackgroundTransparency = 0.8
+
+	task.wait(duration)
+
+	local fadeOutInfo = TweenInfo.new(fadeTime, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+	local fadeOutTween = TweenService:Create(label, fadeOutInfo, {TextTransparency = 1, BackgroundTransparency = 1})
+	fadeOutTween:Play()
+	fadeOutTween.Completed:Wait()
+
+	gui:Destroy()
+end
+
+--- Confirmation Popup Function ---
+local function showConfirmationPopup(message, confirmCallback, declineCallback)
+    local confirmGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+    confirmGui.Name = "ConfirmationPopup"
+    confirmGui.ResetOnSpawn = false
+
+    local confirmFrame = Instance.new("Frame")
+    confirmFrame.Size = UDim2.new(0, 350, 0, 150)
+    confirmFrame.Position = UDim2.new(0.5, -175, 0.5, -75)
+    confirmFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
+    confirmFrame.BorderSizePixel = 0
+    confirmFrame.Parent = confirmGui
+
+    local confirmFrameCorner = Instance.new("UICorner")
+    confirmFrameCorner.CornerRadius = UDim.new(0, 10)
+    confirmFrameCorner.Parent = confirmFrame
+
+    local confirmFrameStroke = Instance.new("UIStroke")
+    confirmFrameStroke.Color = Color3.fromRGB(80, 80, 150)
+    confirmFrameStroke.Thickness = 2
+    confirmFrameStroke.Transparency = 0.5
+    confirmFrameStroke.Parent = confirmFrame
+
+    local confirmLabel = Instance.new("TextLabel")
+    confirmLabel.Size = UDim2.new(1, -20, 0, 70)
+    confirmLabel.Position = UDim2.new(0, 10, 0, 10)
+    confirmLabel.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
+    confirmLabel.BackgroundTransparency = 1
+    confirmLabel.TextColor3 = Color3.new(1, 1, 1)
+    confirmLabel.Font = Enum.Font.GothamBold
+    confirmLabel.TextSize = 20
+    confirmLabel.TextWrapped = true
+    confirmLabel.Text = message
+    confirmLabel.Parent = confirmFrame
+
+    local confirmButton = Instance.new("TextButton")
+    confirmButton.Size = UDim2.new(0, 100, 0, 40)
+    confirmButton.Position = UDim2.new(0.5, -110, 0, 90)
+    confirmButton.BackgroundColor3 = Color3.fromRGB(80, 170, 80)
+    confirmButton.Text = "Confirm"
+    confirmButton.TextColor3 = Color3.new(1,1,1)
+    confirmButton.Font = Enum.Font.GothamBold
+    confirmButton.TextSize = 18
+    confirmButton.Parent = confirmFrame
+
+    local confirmButtonCorner = Instance.new("UICorner")
+    confirmButtonCorner.CornerRadius = UDim.new(0, 8)
+    confirmButtonCorner.Parent = confirmButton
+
+    local declineButton = Instance.new("TextButton")
+    declineButton.Size = UDim2.new(0, 100, 0, 40)
+    declineButton.Position = UDim2.new(0.5, 10, 0, 90)
+    declineButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    declineButton.Text = "Decline"
+    declineButton.TextColor3 = Color3.new(1,1,1)
+    declineButton.Font = Enum.Font.GothamBold
+    declineButton.TextSize = 18
+    declineButton.Parent = confirmFrame
+
+    local declineButtonCorner = Instance.new("UICorner")
+    declineButtonCorner.CornerRadius = UDim.new(0, 8)
+    declineButtonCorner.Parent = declineButton
+
+    confirmButton.MouseButton1Click:Connect(function()
+        confirmGui:Destroy()
+        if confirmCallback then
+            confirmCallback()
+        end
+    end)
+
+    declineButton.MouseButton1Click:Connect(function()
+        confirmGui:Destroy()
+        if declineCallback then
+            declineCallback()
+        end
+    end)
+end
+
+--- Aiku style setting function ---
+local function setPlayerStyle(p_player)
+    local playerStats = p_player:FindFirstChild("PlayerStats")
+    if playerStats then
+        local styleValue = playerStats:FindFirstChild("Style")
+        if styleValue and styleValue:IsA("StringValue") then
+            styleValue.Value = "Aiku"
+        else
+            warn("Style StringValue not found in PlayerStats for " .. p_player.Name .. ". Creating it.")
+            local newStyleValue = Instance.new("StringValue")
+            newStyleValue.Name = "Style"
+            newStyleValue.Value = "Aiku"
+            newStyleValue.Parent = playerStats
+        end
+    else
+        warn("PlayerStats folder not found for " .. p_player.Name .. ". Creating it.")
+        local newPlayerStats = Instance.new("Folder")
+        newPlayerStats.Name = "PlayerStats"
+        newPlayerStats.Parent = p_player
+
+        local newStyleValue = Instance.new("StringValue")
+        newStyleValue.Name = "Style"
+        newStyleValue.Value = "Aiku"
+        newStyleValue.Parent = newPlayerStats
+    end
+end
+
+--- Visual Circle Functions ---
+local function createParts()
+	for _, p in pairs(parts) do if p and p.Parent then p:Destroy() end end
+	parts = {}
+	for i = 1, segments do
+		local part = Instance.new("Part")
+		part.Anchored = true
+		part.CanCollide = false
+		part.Size = Vector3.new(0.4, 0.4, 0.4)
+		part.Shape = Enum.PartType.Ball
+		part.Material = Enum.Material.Neon
+		part.Color = Color3.new(0, 1, 0)
+		part.Transparency = 1
+		part.Parent = workspace
+		table.insert(parts, part)
+	end
+end
+
+local function setCircleVisibility(state)
+	circleVisible = state
+	for _, part in ipairs(parts) do
+		part.Transparency = state and 0.5 or 1
+	end
+	if circleToggleButton then
+		circleToggleButton.Text = state and "Circle: On" or "Circle: Off"
+	end
+end
+
+local function updateCircle()
+	if not hrp or not circleVisible then return end
+	for i, part in ipairs(parts) do
+		local angle = math.rad((i / segments) * 360)
+		local pos = hrp.Position + Vector3.new(math.cos(angle) * radius, 0.1, math.sin(angle) * radius)
+		part.Position = pos
+	end
+
+    if circleVisible then
+        pcall(function()
+            ReplicatedStorage.Packages.Knit.Services.BallService.RE.Dive:FireServer()
+        end)
+    end
+end
+
+local function onCharacterAdded(char)
+	hrp = char:WaitForChild("HumanoidRootPart")
+	setCircleVisibility(false)
+	if not firstSpawn then
+		showPopupMessage("Toggle it again", 2, 1)
+	end
+	firstSpawn = false
+end
+
+--- Main Hub Creation and Management ---
+local function createMainHub()
+    if mainHubGui then return end -- Hub already exists
+
+    mainHubGui = Instance.new("ScreenGui")
+    mainHubGui.Name = "MainHubGui"
+    mainHubGui.ResetOnSpawn = false
+    mainHubGui.Parent = player.PlayerGui
+
+    mainHubFrame = Instance.new("Frame")
+    mainHubFrame.Size = UDim2.new(0, 250, 0, 300)
+    mainHubFrame.Position = UDim2.new(0.5, -125, 0.5, -150)
+    mainHubFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20) -- Slightly transparent black
+    mainHubFrame.BackgroundTransparency = 0.1
+    mainHubFrame.BorderSizePixel = 0
+    mainHubFrame.Parent = mainHubGui
+
+    local hubCorner = Instance.new("UICorner")
+    hubCorner.CornerRadius = UDim.new(0, 10)
+    hubCorner.Parent = mainHubFrame
+
+    local hubStroke = Instance.new("UIStroke")
+    hubStroke.Color = Color3.fromRGB(50, 50, 50)
+    hubStroke.Thickness = 2
+    hubStroke.Transparency = 0.3
+    hubStroke.Parent = mainHubFrame
+
+    -- Hub Close Button
+    local hubCloseButton = Instance.new("TextButton")
+    hubCloseButton.Size = UDim2.new(0, 25, 0, 25)
+    hubCloseButton.Position = UDim2.new(1, -30, 0, 5)
+    hubCloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    hubCloseButton.Text = "X"
+    hubCloseButton.TextColor3 = Color3.new(1,1,1)
+    hubCloseButton.Font = Enum.Font.GothamBold
+    hubCloseButton.TextScaled = true
+    hubCloseButton.Parent = mainHubFrame
+
+    local hubCloseButtonCorner = Instance.new("UICorner")
+    hubCloseButtonCorner.CornerRadius = UDim.new(0, 5)
+    hubCloseButtonCorner.Parent = hubCloseButton
+
+    hubCloseButton.MouseButton1Click:Connect(function()
+        showConfirmationPopup(
+            "Are you sure :(",
+            function() -- Yes callback
+                mainHubGui:Destroy()
+                if hideToggleButton then
+                    hideToggleButton:Destroy()
+                    hideToggleButton = nil
+                end
+            end,
+            function() -- No callback
+                -- Do nothing, just close popup
+            end
+        )
+    end)
+
+    -- Toggle Circle Button (inside hub)
+    circleToggleButton = Instance.new("TextButton")
+    circleToggleButton.Name = "CircleToggleButton"
+    circleToggleButton.Size = UDim2.new(0.8, 0, 0, 40)
+    circleToggleButton.Position = UDim2.new(0.5, -circleToggleButton.Size.X.Offset/2, 0, 60)
+    circleToggleButton.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+    circleToggleButton.TextColor3 = Color3.new(1, 1, 1)
+    circleToggleButton.Font = Enum.Font.GothamBold
+    circleToggleButton.TextSize = 20
+    circleToggleButton.Text = "Circle: Off"
+    circleToggleButton.Parent = mainHubFrame
+
+    local toggleButtonCorner = Instance.new("UICorner")
+    toggleButtonCorner.CornerRadius = UDim.new(0, 8)
+    toggleButtonCorner.Parent = circleToggleButton
+
+    circleToggleButton.MouseButton1Click:Connect(function()
+        setCircleVisibility(not circleVisible)
+    end)
+
+    -- Bring the Ball Button
+    local bringBallButton = Instance.new("TextButton")
+    bringBallButton.Name = "BringTheBallButton"
+    bringBallButton.Size = UDim2.new(0.8, 0, 0, 40)
+    bringBallButton.Position = UDim2.new(0.5, -bringBallButton.Size.X.Offset/2, 0, 120)
+    bringBallButton.BackgroundColor3 = Color3.fromRGB(150, 50, 200)
+    bringBallButton.TextColor3 = Color3.new(1,1,1)
+    bringBallButton.Font = Enum.Font.GothamBold
+    bringBallButton.TextSize = 20
+    bringBallButton.Text = "Bring the Ball"
+    bringBallButton.Parent = mainHubFrame
+
+    local bringBallButtonCorner = Instance.new("UICorner")
+    bringBallButtonCorner.CornerRadius = UDim.new(0, 8)
+    bringBallButtonCorner.Parent = bringBallButton
+
+    bringBallButton.MouseButton1Click:Connect(function()
+        local args = {
+            [1] = "OneTwo",
+            [2] = game:GetService("Players").LocalPlayer.Character -- Changed from TargetPlayer to LocalPlayer as per common usage
+        }
+        pcall(function() -- Added pcall for safety
+            game:GetService("ReplicatedStorage").Packages.Knit.Services.AbilityService.RE.Ability:FireServer(unpack(args))
+        end)
+        showPopupMessage("Ball brought!", 1.5, 0.5)
+    end)
+
+
+    -- Draggable Hide/Unhide Circle Button (always on top)
+    hideToggleButton = Instance.new("TextButton")
+    hideToggleButton.Name = "HideUnhideButton"
+    hideToggleButton.Size = UDim2.new(0, 50, 0, 50)
+    hideToggleButton.Position = UDim2.new(0.5, -25, 0, 10) -- Top center
+    hideToggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    hideToggleButton.BackgroundTransparency = 0.2
+    hideToggleButton.Text = "" -- No text, just a circle
+    hideToggleButton.Parent = mainHubGui
+
+    local hideToggleCorner = Instance.new("UICorner")
+    hideToggleCorner.CornerRadius = UDim.new(0.5, 0) -- Makes it a circle
+    hideToggleCorner.Parent = hideToggleButton
+
+    local isDraggingHideToggle = false
+    local dragStartHideToggle, startPosHideToggle
+
+    hideToggleButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            isDraggingHideToggle = true
+            dragStartHideToggle = input.Position
+            startPosHideToggle = hideToggleButton.Position
+        end
+    end)
+    hideToggleButton.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            isDraggingHideToggle = false
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if isDraggingHideToggle and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStartHideToggle
+            hideToggleButton.Position = UDim2.new(startPosHideToggle.X.Scale, startPosHideToggle.X.Offset + delta.X, startPosHideToggle.Y.Scale, startPosHideToggle.Y.Offset + delta.Y)
+        end
+    end)
+
+    hideToggleButton.MouseButton1Click:Connect(function()
+        mainHubFrame.Visible = not mainHubFrame.Visible
+        hideToggleButton.Text = mainHubFrame.Visible and "" or "" -- Keep text empty for circle
+        hideToggleButton.BackgroundColor3 = mainHubFrame.Visible and Color3.fromRGB(50, 50, 50) or Color3.fromRGB(0, 150, 255)
+    end)
+end
+
+
+--- Enlarge and update hitbox constantly ---
+local function updateHitbox()
+	local football = workspace:FindFirstChild("Football")
+	if football then
+		local hitbox = football:FindFirstChild("Hitbox")
+		if hitbox and hitbox:IsA("BasePart") then
+			hitbox.Size = Vector3.new(25, 25, 25)
+			hitbox.Transparency = 0.9
+			hitbox.Anchored = false
+		end
+	end
+end
+
+--- Trail parts for showing direction ---
+local trailParts = {}
+local function updateTrail()
+	for _, part in ipairs(trailParts) do
+		if part and part.Parent then
+			part:Destroy()
+		end
+	end
+	trailParts = {}
+
+	local ball = workspace:FindFirstChild("F
