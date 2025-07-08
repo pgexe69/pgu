@@ -1,0 +1,116 @@
+--// ScreenGui Setup
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "TeleportGUI"
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+--// Main Frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "TeleportFrame"
+mainFrame.Size = UDim2.new(0, 200, 0, 150)
+mainFrame.Position = UDim2.new(0.5, -100, 0.5, -75) -- Center the frame initially
+mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+mainFrame.BorderSizePixel = 1
+mainFrame.BorderColor3 = Color3.fromRGB(70, 70, 70)
+mainFrame.Active = true -- Important for dragging
+mainFrame.Draggable = true -- Important for dragging on mobile/PC
+mainFrame.Parent = screenGui
+
+--// Title Label
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Name = "TitleLabel"
+titleLabel.Size = UDim2.new(1, 0, 0, 30)
+titleLabel.Position = UDim2.new(0, 0, 0, 0)
+titleLabel.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.Font = Enum.Font.SourceSansBold
+titleLabel.TextSize = 18
+titleLabel.Text = "Teleport Script"
+titleLabel.Parent = mainFrame
+
+--// Close Button (X)
+local closeButton = Instance.new("TextButton")
+closeButton.Name = "CloseButton"
+closeButton.Size = UDim2.new(0, 30, 0, 30)
+closeButton.Position = UDim2.new(1, -30, 0, 0)
+closeButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.Font = Enum.Font.SourceSansBold
+closeButton.TextSize = 20
+closeButton.Text = "X"
+closeButton.Parent = mainFrame
+
+closeButton.MouseButton1Click:Connect(function()
+    screenGui:Destroy()
+end)
+
+--// Teleport Button
+local teleportButton = Instance.new("TextButton")
+teleportButton.Name = "TeleportButton"
+teleportButton.Size = UDim2.new(0.8, 0, 0, 40)
+teleportButton.Position = UDim2.new(0.1, 0, 0.5, -20) -- Centered below title
+teleportButton.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+teleportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+teleportButton.Font = Enum.Font.SourceSansBold
+teleportButton.TextSize = 16
+teleportButton.Text = "Teleport to (-86, -284, 38)"
+teleportButton.Parent = mainFrame
+
+teleportButton.MouseButton1Click:Connect(function()
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    if character and character:FindFirstChild("Humanoid") then
+        local humanoid = character.Humanoid
+        local rootPart = character:FindFirstChild("HumanoidRootPart")
+
+        if rootPart then
+            -- Store current walkspeed and jumppower
+            local originalWalkSpeed = humanoid.WalkSpeed
+            local originalJumpPower = humanoid.JumpPower
+
+            -- Teleport the player
+            rootPart.CFrame = CFrame.new(-86, -284, 38)
+
+            -- Freeze the player
+            humanoid.WalkSpeed = 0
+            humanoid.JumpPower = 0
+
+            -- Wait for 3 seconds
+            task.wait(3)
+
+            -- Unfreeze the player
+            humanoid.WalkSpeed = originalWalkSpeed
+            humanoid.JumpPower = originalJumpPower
+        end
+    end
+end)
+
+--// Make the frame draggable (redundant due to Draggable property, but good for understanding manual drag)
+--[[
+local dragging
+local dragInput
+local dragStart
+
+mainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        dragInput = input
+    end
+end)
+
+mainFrame.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        mainFrame.Position = UDim2.new(mainFrame.Position.X.Scale, mainFrame.Position.X.Offset + delta.X,
+                                         mainFrame.Position.Y.Scale, mainFrame.Position.Y.Offset + delta.Y)
+        dragStart = input.Position
+    end
+end)
+
+mainFrame.InputEnded:Connect(function(input)
+    if input == dragInput then
+        dragging = false
+        dragInput = nil
+    end
+end)
+]]--
