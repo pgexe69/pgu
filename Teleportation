@@ -52,7 +52,7 @@ teleportButton.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
 teleportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 teleportButton.Font = Enum.Font.SourceSansBold
 teleportButton.TextSize = 16
-teleportButton.Text = "Teleport to (136, 9622, -3096)"
+teleportButton.Text = "Teleport to (57, 9622, -3060)" -- Updated coordinates in text
 teleportButton.Parent = mainFrame
 
 teleportButton.MouseButton1Click:Connect(function()
@@ -67,8 +67,8 @@ teleportButton.MouseButton1Click:Connect(function()
             local originalWalkSpeed = humanoid.WalkSpeed
             local originalJumpPower = humanoid.JumpPower
 
-            -- Teleport the player
-            rootPart.CFrame = CFrame.new(4, 9622, -3039)
+            -- Teleport the player to the new coordinates
+            rootPart.CFrame = CFrame.new(57, 9622, -3060)
 
             -- Freeze the player
             humanoid.WalkSpeed = 0
@@ -83,34 +83,3 @@ teleportButton.MouseButton1Click:Connect(function()
         end
     end
 end)
-
---// Make the frame draggable (redundant due to Draggable property, but good for understanding manual drag)
---[[
-local dragging
-local dragInput
-local dragStart
-
-mainFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        dragInput = input
-    end
-end)
-
-mainFrame.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - dragStart
-        mainFrame.Position = UDim2.new(mainFrame.Position.X.Scale, mainFrame.Position.X.Offset + delta.X,
-                                         mainFrame.Position.Y.Scale, mainFrame.Position.Y.Offset + delta.Y)
-        dragStart = input.Position
-    end
-end)
-
-mainFrame.InputEnded:Connect(function(input)
-    if input == dragInput then
-        dragging = false
-        dragInput = nil
-    end
-end)
-]]--
