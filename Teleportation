@@ -68,7 +68,7 @@ teleportButton.MouseButton1Click:Connect(function()
             local originalJumpPower = humanoid.JumpPower
 
             -- Teleport the player
-            rootPart.CFrame = CFrame.new(-86, -284, 38)
+            rootPart.CFrame = CFrame.new(4, 9622, -3039)
 
             -- Freeze the player
             humanoid.WalkSpeed = 0
