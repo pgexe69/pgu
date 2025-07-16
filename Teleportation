@@ -52,7 +52,7 @@ teleportButton.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
 teleportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 teleportButton.Font = Enum.Font.SourceSansBold
 teleportButton.TextSize = 16
-teleportButton.Text = "Teleport to (-86, -284, 38)"
+teleportButton.Text = "Teleport to (136, 9622, -3096)"
 teleportButton.Parent = mainFrame
 
 teleportButton.MouseButton1Click:Connect(function()
